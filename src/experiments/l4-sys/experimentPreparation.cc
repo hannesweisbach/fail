@@ -5,6 +5,7 @@
 
 #include "experiment.hpp"
 #include "InstructionFilter.hpp"
+#include "MemoryFilter.hpp"
 #include "aluinstr.hpp"
 
 #include "sal/SALConfig.hpp"
@@ -85,7 +86,8 @@ void L4SysExperiment::collectInstructionTrace(fail::BPSingleListener* bp)
     }
 
 	ofstream instr_list_file(conf.instruction_list.c_str(), ios::binary);
-    RangeSetInstructionFilter filtering(conf.filter.c_str());
+	RangeSetInstructionFilter inst_filter(conf.inst_filter.c_str());
+	RangeSetMemoryFilter mem_filter(conf.mem_filter.c_str());
 	bp->setWatchInstructionPointer(ANY_ADDR);
 
 	map<address_t, unsigned> times_called_map;
@@ -116,13 +118,13 @@ void L4SysExperiment::collectInstructionTrace(fail::BPSingleListener* bp)
         
         currtime = simulator.getTimerTicks();
         deltatime = currtime - prevtime;
-        
+
         if (curr_addr == conf.filter_entry) {
-            injecting = true;
+          injecting = true;
         }
 
         if (curr_addr == conf.filter_exit) {
-            injecting = false;
+          injecting = false;
         }
 
         // Only trace if:
@@ -130,12 +132,12 @@ void L4SysExperiment::collectInstructionTrace(fail::BPSingleListener* bp)
         // 2) we have a valid instruction according to filter rules, and
         // 3) we are in the TRACE address space
         if (!injecting or
-            !filtering.isValidInstr(curr_addr, reinterpret_cast<char const*>(calculateInstructionAddress()))
-                       or
-            (BX_CPU(0)->cr3 != conf.address_space_trace)
-            ) {
-            //log << "connt..." << std::endl;
-            continue;
+            !inst_filter.isValidInstr(curr_addr,
+                                      reinterpret_cast<char const *>(
+                                          calculateInstructionAddress())) or
+            (BX_CPU(0)->cr3 != conf.address_space_trace)) {
+          // log << "connt..." << std::endl;
+          continue;
         }
 
         if (res == &ML) {
@@ -145,6 +147,10 @@ void L4SysExperiment::collectInstructionTrace(fail::BPSingleListener* bp)
                 << ML.getTriggerAccessType() << "," << ML.getTriggerWidth()
                 << ")" << std::endl;
 #endif
+          // 4) we have a valid memory address according to filter rules
+          if (mem_filter.isInvalid(ML.getTriggerAddress()))
+            continue;
+
             ++mem_valid;
 
             Trace_Event te;

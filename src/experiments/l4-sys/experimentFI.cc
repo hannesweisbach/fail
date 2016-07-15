@@ -70,7 +70,7 @@ BaseListener* L4SysExperiment::afterInjection(L4SysProtoMsg_Result* res)
     ifstream instr_list_file(conf.instruction_list.c_str(), ios::binary);
 	instr_list_file.seekg((1 + res->instr_offset()) * sizeof(TraceInstr));
 
-    RangeSetInstructionFilter filtering(conf.filter.c_str());
+    RangeSetInstructionFilter filtering(conf.inst_filter.c_str());
 
 	for (;;) {
 		// Step over _all_ instructions in the trace AS

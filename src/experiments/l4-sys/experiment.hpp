@@ -177,7 +177,8 @@ private:
 			std::string instruction_list;
 			std::string alu_instructions;
 			std::string golden_run;
-			std::string filter;
+			std::string inst_filter;
+			std::string mem_filter;
 			std::string trace;
 			std::string campain_server;
 

@@ -129,9 +129,11 @@ void L4SysExperiment::parseOptions(L4SysConfig &conf) {
 		cmd.addOption("", "instruction_list", Arg::Optional, "--instruction_list \t define L4SYS_INSTRUCTION_LIST");
 	CommandLine::option_handle OPT_CORRECT_OUTPUT = 
 		cmd.addOption("", "golden_run", Arg::Optional, "--correct_output \t define L4SYS_CORRECT_OUTPUT");
-	CommandLine::option_handle OPT_FILTER = 
-		cmd.addOption("", "filter", Arg::Optional, "--filter \t define L4SYS_FILTER");
-	CommandLine::option_handle OPT_TRACE = 
+	CommandLine::option_handle OPT_INST_FILTER =
+		cmd.addOption("", "inst_filter", Arg::Optional, "--inst_filter \t define L4SYS_INST_FILTER");
+	CommandLine::option_handle OPT_MEM_FILTER =
+		cmd.addOption("", "mem_filter", Arg::Optional, "--mem_filter \t define L4SYS_MEM_FILTER");
+	CommandLine::option_handle OPT_TRACE =
 		cmd.addOption("", "trace", Arg::Optional, "--trace \t define outputfile for trace (default trace.pb)");
 	CommandLine::option_handle OPT_CAMPAIN_SERVER = 
 		cmd.addOption("", "campain_server", Arg::Optional, "--campain_server \t specify the hostname of the campain server (default localhost)");
@@ -268,11 +270,18 @@ void L4SysExperiment::parseOptions(L4SysConfig &conf) {
 		conf.golden_run = "golden.out";
 	}
 
-	if (cmd[OPT_FILTER]) {
-		conf.filter = std::string(cmd[OPT_FILTER].arg);
-		log << "filter: "<< conf.filter << endl;
+	if (cmd[OPT_INST_FILTER]) {
+		conf.inst_filter = std::string(cmd[OPT_INST_FILTER].arg);
+		log << "instruction filter: "<< conf.inst_filter << endl;
 	} else {
-		 conf.filter = "filter.list";
+		 conf.inst_filter = "filter.list";
+	}
+
+	if (cmd[OPT_MEM_FILTER]) {
+		conf.mem_filter = std::string(cmd[OPT_MEM_FILTER].arg);
+		log << "memory filter: "<< conf.mem_filter << endl;
+	} else {
+		conf.mem_filter = "mem_filter.list";
 	}
 
 	if (cmd[OPT_TRACE]) {

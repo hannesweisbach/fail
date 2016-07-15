@@ -23,6 +23,7 @@ set(MY_CAMPAIGN_SRCS
 	UDIS86.cc
 	InstructionFilter.hpp
 	InstructionFilter.cc
+	MemoryFilter.cc
 )
 
 #### PROTOBUFS ####
@@ -35,6 +36,7 @@ PROTOBUF_GENERATE_CPP(PROTO_SRCS PROTO_HDRS ${MY_PROTOS})
 
 ## Build library
 add_library(fail-${EXPERIMENT_NAME} ${PROTO_SRCS} ${PROTO_HDRS} ${MY_CAMPAIGN_SRCS})
+set_target_properties(fail-${EXPERIMENT_NAME} PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 
 find_package(LibUdis86 REQUIRED)
 include_directories(${LIBUDIS86_INCLUDE_DIRS})

@@ -10,18 +10,13 @@ set(MY_PROTOS
 )
 
 set(MY_CAMPAIGN_SRCS
-	aluinstr.hpp
 	aluinstr.cc
-	experiment.hpp
 	experiment.cc
 	experimentFI.cc
 	experimentParameter.cc
 	experimentPreparation.cc
-	campaign.hpp
 	campaign.cc
-	UDIS86.hpp
 	UDIS86.cc
-	InstructionFilter.hpp
 	InstructionFilter.cc
 	MemoryFilter.cc
 )

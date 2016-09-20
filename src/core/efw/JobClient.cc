@@ -1,27 +1,36 @@
 #include "JobClient.hpp"
 #include "comm/SocketComm.hpp"
 
+#include <err.h>
+#include <sstream>
+
 using namespace std;
 
 namespace fail {
 
-JobClient::JobClient(const std::string& server, int port)
-	: m_server(server), m_server_port(port),
-	m_server_runid(0), // server accepts this for virgin clients
-	m_job_runtime_total(0),
-	m_job_throughput(CLIENT_JOB_INITIAL), // will be corrected after measurement
-	m_job_total(0),
-	m_connect_failed(false)
-{
+JobClient::JobClient(const std::string &server, int port)
+    : m_server(server), m_server_port(port), m_sockfd(-1),
+      m_server_runid(0), // server accepts this for virgin clients
+      m_job_runtime_total(0),
+      m_job_throughput(
+	  CLIENT_JOB_INITIAL), // will be corrected after measurement
+      m_job_total(0),
+      m_connect_failed(false) {
 	SocketComm::init();
-	m_server_ent = gethostbyname(m_server.c_str());
 
-	cout << "JobServer: " << m_server.c_str() << endl;
+	cout << "Connecting to JobServer at: " << m_server.c_str() << ":"
+	     << m_server_port << endl;
 
-	if (m_server_ent == NULL) {
-		herror("[Client@gethostbyname()]");
-		// TODO: Log-level?
-		exit(1);
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	std::ostringstream os;
+	os << m_server_port;
+	int error =
+	    getaddrinfo(m_server.c_str(), os.str().c_str(), &hints, &ai);
+	if (error) {
+		errx(1, "gai: %s", gai_strerror(error));
 	}
 	srand(time(NULL)); // needed for random backoff (see connectToServer)
 }
@@ -30,6 +39,7 @@ JobClient::~JobClient()
 {
 	// Send back completed jobs to the server
 	sendResultsToServer();
+	freeaddrinfo(ai);
 }
 
 bool JobClient::connectToServer()
@@ -39,48 +49,51 @@ bool JobClient::connectToServer()
 		return false;
 	}
 
-	int retries = CLIENT_RETRY_COUNT;
-	while (true) {
-		// Connect to server
-		struct sockaddr_in serv_addr;
-		m_sockfd = socket(AF_INET, SOCK_STREAM, 0);
-		if (m_sockfd < 0) {
-			perror("[Client@socket()]");
-			// TODO: Log-level?
-			exit(0);
-		}
+	for (int retry = CLIENT_RETRY_COUNT;; --retry) {
+		for (struct addrinfo *i = ai; i; i = i->ai_next) {
+			m_sockfd = socket(i->ai_family, i->ai_socktype,
+					  i->ai_protocol);
+			if (m_sockfd < 0) {
+				err(0, "[Client@socket()]");
+			}
 
-		/* Enable address reuse */
-		int on = 1;
-		setsockopt( m_sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on) );
+			int on = 1;
+			setsockopt(m_sockfd, SOL_SOCKET, SO_REUSEADDR, &on,
+				   sizeof(on));
 
-		memset(&serv_addr, 0, sizeof(serv_addr));
-		serv_addr.sin_family = AF_INET;
-		memcpy(&serv_addr.sin_addr.s_addr, m_server_ent->h_addr, m_server_ent->h_length);
-		serv_addr.sin_port = htons(m_server_port);
-
-		if (connect(m_sockfd, (sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
-			perror("[Client@connect()]");
-			close(m_sockfd);
-			// TODO: Log-level?
-			if (retries > 0) {
-				// Wait CLIENT_RAND_BACKOFF_TSTART to RAND_BACKOFF_TEND seconds:
-				int delay = rand() % (CLIENT_RAND_BACKOFF_TEND-CLIENT_RAND_BACKOFF_TSTART) + CLIENT_RAND_BACKOFF_TSTART;
-				cout << "[Client] Retrying to connect to server in ~" << delay << "s..." << endl;
-				// TODO: Log-level?
-				sleep(delay);
-				usleep(rand() % 1000000);
-				--retries;
+			if (connect(m_sockfd, i->ai_addr, i->ai_addrlen) < 0) {
+				perror("[Client@connect()]");
+				close(m_sockfd);
+				m_sockfd = -1;
 				continue;
 			}
-			cout << "[Client] Unable to reconnect (tried " << CLIENT_RETRY_COUNT << " times); "
-			     << "I'll give it up!" << endl;
-			     // TODO: Log-level?
-			m_connect_failed = true;
-			return false; // finally: unable to connect, give it up :-(
+
+			break; /* okay we got one */
 		}
-		break; // connected! :-)
+
+		if (m_sockfd < 0 && retry > 0) {
+			// Wait CLIENT_RAND_BACKOFF_TSTART to RAND_BACKOFF_TEND
+			// seconds:
+			int delay = rand() % (CLIENT_RAND_BACKOFF_TEND -
+					      CLIENT_RAND_BACKOFF_TSTART) +
+				    CLIENT_RAND_BACKOFF_TSTART;
+			cout << "[Client] Retrying to connect to server in ~"
+			     << delay << "s..." << endl;
+			// TODO: Log-level?
+			sleep(delay);
+			usleep(rand() % 1000000);
+		}
 	}
+
+	if (m_sockfd < 0) {
+		cout << "[Client] Unable to reconnect (tried "
+		     << CLIENT_RETRY_COUNT << " times); "
+		     << "I'll give it up!" << endl;
+		// TODO: Log-level?
+		m_connect_failed = true;
+		return false; // finally: unable to connect, give it up :-(
+	}
+
 	cout << "[Client] Connection established!" << endl;
 	// TODO: Log-level?
 

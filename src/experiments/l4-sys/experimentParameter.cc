@@ -137,8 +137,11 @@ void L4SysExperiment::parseOptions(L4SysConfig &conf) {
 		cmd.addOption("", "trace", Arg::Optional, "--trace \t define outputfile for trace (default trace.pb)");
 	CommandLine::option_handle OPT_CAMPAIN_SERVER = 
 		cmd.addOption("", "campain_server", Arg::Optional, "--campain_server \t specify the hostname of the campain server (default localhost)");
+	CommandLine::option_handle OPT_PORT =
+	    cmd.addOption("", "port", Arg::Optional,
+			  "--port \t Listening port of the campain server "
+			  "(default: SERVER_COMM_TCP_PORT)");
 
-	
 	if (!cmd.parse()) { 
 		cerr << "Error parsing arguments." << endl;
 		simulator.terminate(1);
@@ -296,6 +299,13 @@ void L4SysExperiment::parseOptions(L4SysConfig &conf) {
 	 	log << "campain_server: "<< conf.campain_server << endl;
 	} else {
 		conf.campain_server = "localhost";
+	}
+
+	if (cmd[OPT_PORT]) {
+		conf.port = atoi(cmd[OPT_PORT].arg);
+		log << "port: " << conf.port << endl;
+	} else {
+		conf.port = SERVER_COMM_TCP_PORT;
 	}
 
 	if (cmd[STEP]) {

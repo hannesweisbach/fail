@@ -181,6 +181,7 @@ private:
 			std::string mem_filter;
 			std::string trace;
 			std::string campain_server;
+			int port;
 
 			unsigned long int numinstr;
 			unsigned long int totinstr;

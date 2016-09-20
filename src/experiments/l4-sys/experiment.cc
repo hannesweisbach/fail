@@ -71,7 +71,8 @@ bool L4SysExperiment::run()
 		}
 		default: {
 			BPSingleListener *bp = 0;
-			m_jc = fail::JobClient(conf.campain_server.c_str());
+			m_jc = fail::JobClient(conf.campain_server.c_str(),
+					       conf.port);
 			doExperiments(bp);
 		}
 	}

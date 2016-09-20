@@ -10,18 +10,13 @@ using namespace std;
 
 static Logger LOG("RandomJumpImporter");
 
-/**
- * Callback function that can be used to add command line options
- * to the campaign
- */
-bool RandomJumpImporter::cb_commandline_init() {
-	CommandLine &cmd = CommandLine::Inst();
+RandomJumpImporter::RandomJumpImporter() : m_mm_from(0), m_mm_to(0) {
+  CommandLine &cmd = CommandLine::Inst();
 
 	FROM = cmd.addOption("", "jump-from", Arg::Required,
 		"--jump-from \tRandomJump: Which addresses should be jumped from (a memory map; may be used more than once)");
 	TO   = cmd.addOption("", "jump-to", Arg::Required,
 		"--jump-to \tRandomJump: Where to jump (a memory map; may be used more than once)");
-	return true;
 }
 
 bool RandomJumpImporter::handle_ip_event(fail::simtime_t curtime, instruction_count_t instr,

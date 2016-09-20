@@ -57,13 +57,8 @@ protected:
 	}
 
 public:
-	ElfImporter() : Importer() {}
+	ElfImporter();
 
-	/**
-	 * Callback function that can be used to add command line options
-	 * to the cmd interface
-	 */
-	virtual bool cb_commandline_init();
 	virtual bool create_database();
 	virtual bool copy_to_database(fail::ProtoIStream &ps);
 	virtual bool clear_database();

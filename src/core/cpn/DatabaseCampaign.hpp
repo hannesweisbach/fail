@@ -1,6 +1,7 @@
 #ifndef __CPN_DATABASE_CAMPAIGN_H__
 #define __CPN_DATABASE_CAMPAIGN_H__
 
+#include "util/CommandLine.hpp"
 #include "util/Database.hpp"
 #include "util/DatabaseProtobufAdapter.hpp"
 #include "comm/DatabaseCampaignMessage.pb.h"
@@ -39,10 +40,18 @@ class DatabaseCampaign : public Campaign {
 	id_map completed_pilots; // !< map: Pilot IDs -> result count
 #endif
 
+	CommandLine::option_handle HELP;
+	CommandLine::option_handle VARIANT;
+	CommandLine::option_handle VARIANT_EXCLUDE;
+	CommandLine::option_handle BENCHMARK;
+	CommandLine::option_handle BENCHMARK_EXCLUDE;
+	CommandLine::option_handle PRUNER;
+	CommandLine::option_handle BURST;
+
 	bool m_inject_bursts; // !< inject burst faults?
 
 public:
-	DatabaseCampaign() {};
+	DatabaseCampaign();
 
 	/**
 	 * Defines the campaign. In the DatabaseCampaign the database
@@ -66,12 +75,6 @@ public:
 	virtual int expected_number_of_results(std::string variant, std::string benchmark) {
 		return (m_inject_bursts ? 1 : 8);
 	}
-
-	/**
-	 * Callback function that can be used to add command line options
-	 * to the campaign
-	 */
-	virtual bool cb_commandline_init() { return true; }
 
 	/**
 	 * Callback to the campaign to get the result message descriptor

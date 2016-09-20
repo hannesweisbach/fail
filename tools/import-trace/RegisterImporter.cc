@@ -10,25 +10,22 @@ using namespace fail;
 
 static Logger LOG("RegisterImporter");
 
-/**
- * Callback function that can be used to add command line options
- * to the campaign
- */
-bool RegisterImporter::cb_commandline_init() {
-	CommandLine &cmd = CommandLine::Inst();
+RegisterImporter::RegisterImporter()
+    : Importer(), do_gp(true), do_flags(false), do_ip(false),
+      do_split_registers(true), m_ip_register_id(0) {
+  CommandLine &cmd = CommandLine::Inst();
 
-	NO_GP = cmd.addOption("", "no-gp", Arg::None,
-		"--no-gp \tRegisterImporter: do not inject general purpose registers");
-	FLAGS = cmd.addOption("", "flags", Arg::None,
-		"--flags \tRegisterImporter: inject flags register");
-	IP    = cmd.addOption("", "ip", Arg::None,
-		"--ip \tRegisterImporter: inject instruction pointer");
-	NO_SPLIT = cmd.addOption("", "do-not-split", Arg::None,
-		 "--do-not-split \tRegisterImporter: Do not split the registers into one byte chunks");
-
-	return true;
+  NO_GP = cmd.addOption(
+      "", "no-gp", Arg::None,
+      "--no-gp \tRegisterImporter: do not inject general purpose registers");
+  FLAGS = cmd.addOption("", "flags", Arg::None,
+			"--flags \tRegisterImporter: inject flags register");
+  IP = cmd.addOption("", "ip", Arg::None,
+		     "--ip \tRegisterImporter: inject instruction pointer");
+  NO_SPLIT = cmd.addOption("", "do-not-split", Arg::None,
+			   "--do-not-split \tRegisterImporter: Do not split "
+			   "the registers into one byte chunks");
 }
-
 
 bool RegisterImporter::addRegisterTrace(simtime_t curtime, instruction_count_t instr,
 										Trace_Event &ev,

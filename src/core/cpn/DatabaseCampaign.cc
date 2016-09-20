@@ -18,43 +18,31 @@ using namespace fail;
 static Logger log_recv("DatabaseCampaign::recv");
 static Logger log_send("DatabaseCampaign");
 
-bool DatabaseCampaign::run() {
+DatabaseCampaign::DatabaseCampaign() {
 	CommandLine &cmd = CommandLine::Inst();
 
 	cmd.addOption("", "", Arg::None, "USAGE: fail-server [options...]\n\n");
-	CommandLine::option_handle HELP = cmd.addOption("h", "help", Arg::None, "-h,--help \tPrint usage and exit");
+	HELP = cmd.addOption("h", "help", Arg::None, "-h,--help \tPrint usage and exit");
 
 	Database::cmdline_setup();
 
-	/* Give the implementation the chance to add stuff to the command
-	   line interface */
-	if (!cb_commandline_init()) return false;
-
-	CommandLine::option_handle VARIANT =
-		cmd.addOption("v", "variant", Arg::Required,
+	VARIANT =	cmd.addOption("v", "variant", Arg::Required,
 			"-v/--variant \tVariant label (default: \"%\"; use % and _ as wildcard characters; may be used more than once)");
-	CommandLine::option_handle VARIANT_EXCLUDE =
-		cmd.addOption("", "variant-exclude", Arg::Required,
+	VARIANT_EXCLUDE = cmd.addOption("", "variant-exclude", Arg::Required,
 			"--variant-exclude \tVariant to exclude (default: UNSET; use % and _ as wildcard characters; may be used more than once)");
-	CommandLine::option_handle BENCHMARK =
-		cmd.addOption("b", "benchmark", Arg::Required,
+	BENCHMARK = cmd.addOption("b", "benchmark", Arg::Required,
 			"-b/--benchmark \tBenchmark label (default: \"%\"; use % and _ as wildcard characters; may be used more than once)");
-	CommandLine::option_handle BENCHMARK_EXCLUDE =
-		cmd.addOption("", "benchmark-exclude", Arg::Required,
+	BENCHMARK_EXCLUDE = cmd.addOption("", "benchmark-exclude", Arg::Required,
 			"--benchmark-exclude \tBenchmark to exclude (default: UNSET; use % and _ as wildcard characters; may be used more than once)");
-	CommandLine::option_handle PRUNER =
-		cmd.addOption("p", "prune-method", Arg::Required,
+	PRUNER = cmd.addOption("p", "prune-method", Arg::Required,
 			"-p/--prune-method \tWhich import method(s) to use (default: \"%\"; use % and _ as wildcard characters)");
 
-	CommandLine::option_handle BURST =
-		cmd.addOption("","inject-bursts", Arg::None,
+	BURST = cmd.addOption("","inject-bursts", Arg::None,
 			"--inject-bursts \tinject burst faults (default: single bitflips)");
+}
 
-	if (!cmd.parse()) {
-		log_send << "Error parsing arguments." << std::endl;
-		exit(-1);
-	}
-
+bool DatabaseCampaign::run() {
+	CommandLine &cmd = CommandLine::Inst();
 	if (cmd[HELP]) {
 		cmd.printUsage();
 		exit(0);

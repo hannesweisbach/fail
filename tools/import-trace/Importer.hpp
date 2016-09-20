@@ -125,12 +125,6 @@ public:
 		m_last_ip(0), m_last_instr(0), m_last_time(0) {}
 	bool init(const std::string &variant, const std::string &benchmark, fail::Database *db);
 
-	/**
-	 * Callback function that can be used to add command line options
-	 * to the cmd interface
-	 */
-	virtual bool cb_commandline_init() { return true; }
-
 	virtual bool create_database();
 	virtual bool copy_to_database(fail::ProtoIStream &ps);
 	virtual bool clear_database();

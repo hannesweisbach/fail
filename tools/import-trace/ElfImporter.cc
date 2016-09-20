@@ -17,19 +17,16 @@ using namespace std;
 
 static Logger LOG("ElfImporter");
 
-/**
- * Callback function that can be used to add command line options
- * to the campaign
- */
-bool ElfImporter::cb_commandline_init()
-{
-	CommandLine &cmd = CommandLine::Inst();
+ElfImporter::ElfImporter() : Importer() {
+  CommandLine &cmd = CommandLine::Inst();
 
-	OBJDUMP = cmd.addOption("", "objdump", Arg::Required,
-		"--objdump \tObjdump: location of objdump binary, otherwise LLVM Disassembler is used");
-	SOURCECODE = cmd.addOption("", "sources", Arg::None,
-		"--sources \timport all source files and the mapping of code line<->static instruction into the database");
-	return true;
+  OBJDUMP = cmd.addOption("", "objdump", Arg::Required,
+			  "--objdump \tObjdump: location of objdump binary, "
+			  "otherwise LLVM Disassembler is used");
+  SOURCECODE =
+      cmd.addOption("", "sources", Arg::None,
+		    "--sources \timport all source files and the mapping of "
+		    "code line<->static instruction into the database");
 }
 
 bool ElfImporter::create_database()

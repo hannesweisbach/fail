@@ -24,13 +24,7 @@ class RegisterImporter : public Importer {
 	unsigned m_ip_register_id;
 
 public:
-	RegisterImporter() : Importer(), do_gp(true), do_flags(false), do_ip(false),
-						 do_split_registers(true), m_ip_register_id(0) {}
-	/**
-	 * Callback function that can be used to add command line options
-	 * to the cmd interface
-	 */
-	virtual bool cb_commandline_init();
+	RegisterImporter();
 
 protected:
 	virtual bool handle_ip_event(fail::simtime_t curtime, instruction_count_t instr,

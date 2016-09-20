@@ -169,10 +169,6 @@ int main(int argc, char *argv[]) {
 	}
 	LOG << "Using " << imp << endl;
 
-	if (importer && !(importer->cb_commandline_init())) {
-		std::cerr << "Cannot call importers command line initialization!" << std::endl;
-		exit(-1);
-	}
 	// Since the importer might have added command line options, we need to
 	// reparse all arguments.
 	if (!cmd.parse()) {

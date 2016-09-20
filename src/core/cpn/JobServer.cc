@@ -8,6 +8,7 @@
 #include <strings.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <err.h>
 
 #include "comm/SocketComm.hpp"
 #include "JobServer.hpp"
@@ -117,35 +118,38 @@ struct timed_join_successful {
 
 void JobServer::run()
 {
-	struct sockaddr_in clientaddr;
-	socklen_t clen = sizeof(clientaddr);
+	struct addrinfo hints;
+	memset(&hints, 0, sizeof(struct addrinfo));
+	hints.ai_family = AF_UNSPEC; /* Allow IPv4 or IPv6 */
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE;
 
-	// implementation of server-client communication
+	struct addrinfo *ai;
+	int err = getaddrinfo(NULL, m_port, &hints, &ai);
+	if (err != 0) {
+		errx(err, "getaddrinfo: %s\n", gai_strerror(err));
+	}
+
 	int s;
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		perror("socket");
-		// TODO: Log-level?
-		return;
+	struct addrinfo *i;
+	for (i = ai; i; i = i->ai_next) {
+		s = socket(i->ai_family, i->ai_socktype, i->ai_protocol);
+		if (s == -1) {
+			continue;
+		}
+
+		if (::bind(s, i->ai_addr, i->ai_addrlen) == 0) {
+			int on = 1;
+			if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on,
+				       sizeof(on)) == -1) {
+				perror("setsockopt");
+			}
+			break;
+		}
 	}
 
-	/* Enable address reuse */
-	int on = 1;
-	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1) {
-		perror("setsockopt");
-		// TODO: Log-level?
-		return;
-	}
-
-	/* IPv4, bind to all interfaces */
-	struct sockaddr_in saddr = {0};
-	saddr.sin_family = AF_INET;
-	saddr.sin_port = htons(m_port);
-	saddr.sin_addr.s_addr = htons(INADDR_ANY);
-
-	/* bind to port */
-	if (::bind(s, (struct sockaddr*) &saddr, sizeof(saddr)) == -1) {
-		perror("bind");
-		// TODO: Log-level?
+	if (i == NULL) {
+		std::cerr << "Could not bind" << std::endl;
 		return;
 	}
 
@@ -156,12 +160,14 @@ void JobServer::run()
 		// TODO: Log-level?
 		return;
 	}
-	cout << "JobServer listening ..." << endl;
+	cout << "JobServer listening on port " << m_port << " ..." << endl;
 	// TODO: Log-level?
 #ifndef __puma
 	boost::thread* th;
 	while (!m_finish) {
 		// Accept connection
+		struct sockaddr_in clientaddr;
+		socklen_t clen = sizeof(clientaddr);
 		int cs = SocketComm::timedAccept(s, (struct sockaddr*)&clientaddr, &clen, 100);
 		if (cs < 0) {
 			if (errno != EWOULDBLOCK) {

@@ -10,8 +10,12 @@
 #include "comm/ExperimentData.hpp"
 #include "JobServer.hpp"
 #include "Campaign.hpp"
+#include "util/CommandLine.hpp"
+#include "util/Logger.hpp"
 
 namespace fail {
+
+static Logger log_send("CampaignManager");
 
 /**
  * \class CampaignManager
@@ -23,16 +27,32 @@ class CampaignManager {
 private:
 	JobServer *m_jobserver;
 	Campaign* m_currentCampaign;
+	CommandLine::option_handle port;
 public:
-	CampaignManager() : m_jobserver(0), m_currentCampaign(0) { }
+	CampaignManager() : m_jobserver(0), m_currentCampaign(0)
+	{
+		fail::CommandLine &cmd = fail::CommandLine::Inst();
+		port = cmd.addOption("p", "port", Arg::Required,
+				     "-p,--port \tListening port of server; no "
+				     "value chooses port automatically");
+	}
 	~CampaignManager() { delete m_jobserver; }
 	/**
 	 * Executes a user campaign
 	 */
 	bool runCampaign(Campaign* c)
 	{
+		fail::CommandLine &cmd = fail::CommandLine::Inst();
+		if (!cmd.parse()) {
+			log_send << "Error parsing arguments." << std::endl;
+			exit(-1);
+		}
+
 		if (!m_jobserver) {
-			m_jobserver = new JobServer;
+			m_jobserver =
+			    (cmd[port].count() > 0)
+				? new JobServer(cmd[port].first()->arg)
+				: new JobServer;
 		}
 		m_currentCampaign = c;
 		bool ret = c->run();

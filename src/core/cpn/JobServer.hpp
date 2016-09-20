@@ -31,7 +31,7 @@ class CommThread;
 class JobServer {
 private:
 	//! The TCP Port number
-	int m_port;
+	const char *m_port;
 	//! TODO nice termination concept
 	bool m_finish;
 	//!  Campaign signaled last expirement data set
@@ -82,9 +82,14 @@ private:
 	void sendWork(int sockfd);
 
 public:
-	JobServer(int port = SERVER_COMM_TCP_PORT) : m_port(port), m_finish(false), m_noMoreExps(false),
-		m_maxThreads(128), m_threadtimeout(0), m_undoneJobs(SERVER_OUT_QUEUE_SIZE)
-	{
+#define xstr(s) str(s)
+#define str(s) #s
+	JobServer(const char *port = xstr(SERVER_COMM_TCP_PORT))
+#undef str
+#undef xstr
+	    : m_port(port), m_finish(false), m_noMoreExps(false),
+	      m_maxThreads(128), m_threadtimeout(0),
+	      m_undoneJobs(SERVER_OUT_QUEUE_SIZE) {
 		SocketComm::init();
 		m_runid = std::time(0);
 #ifndef __puma
